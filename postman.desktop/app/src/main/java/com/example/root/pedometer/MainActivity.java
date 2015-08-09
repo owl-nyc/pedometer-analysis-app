@@ -40,7 +40,7 @@ public class MainActivity extends Activity implements SensorEventListener {
     // GPSTracker class
     GPSTracker gps;
 
-    private TextView statusView;
+//    private TextView statusView;
     private TextView readingsView;
     private TextView conditionView;
     private Button toggleButton;
@@ -56,7 +56,7 @@ public class MainActivity extends Activity implements SensorEventListener {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        statusView = (TextView) findViewById(R.id.status);
+//        statusView = (TextView) findViewById(R.id.status);
         readingsView = (TextView) findViewById(R.id.readings);
         conditionView = (TextView) findViewById(R.id.condition);
         toggleButton = (Button) findViewById(R.id.toggly);
@@ -142,15 +142,18 @@ public class MainActivity extends Activity implements SensorEventListener {
                 long timeDifference = nowTime - pastTime;
                 msPerStep.offer(String.valueOf(timeDifference));
 
-                if (msPerStep.size() < NUMBER_OF_STEPS_TRACKED) {
-                    int difference = NUMBER_OF_STEPS_TRACKED - msPerStep.size();
-                    statusView.setText("Needs " + difference + " more steps!");
-                } else {
-                    statusView.setText(abnormals + " abnormals in " + NUMBER_OF_STEPS_TRACKED + " steps");
+                if (msPerStep.size() > NUMBER_OF_STEPS_TRACKED) {
                     if (abnormals > 13) {
                         abnormal = true;
                     }
-                }
+//                    int difference = NUMBER_OF_STEPS_TRACKED - msPerStep.size();
+//                    statusView.setText("Needs " + difference + " more steps!");
+                } //else {
+//                    statusView.setText(abnormals + " abnormals in " + NUMBER_OF_STEPS_TRACKED + " steps");
+//                    if (abnormals > 13) {
+//                        abnormal = true;
+//                    }
+//                }
 
                 String print = "";
                 String[] msPerStepArray = msPerStep.toArray(new String[NUMBER_OF_STEPS_TRACKED + 1]);
