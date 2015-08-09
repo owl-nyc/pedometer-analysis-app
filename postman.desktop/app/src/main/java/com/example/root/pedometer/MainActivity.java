@@ -7,9 +7,17 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.TextView;
+
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
 
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -18,6 +26,10 @@ public class MainActivity extends Activity implements SensorEventListener {
 
     private final int NUMBER_OF_STEPS_TRACKED = 35;//1000;
     private final int ABNORNAL_THRESHOLD = 150; //13
+
+    RequestQueue queue;
+    // Tag used to log messages
+    private static final String TAG = MainActivity.class.getSimpleName();
 
     private TextView statusView;
     private TextView readingsView;
@@ -42,6 +54,27 @@ public class MainActivity extends Activity implements SensorEventListener {
                 .getDefaultSensor(Sensor.TYPE_STEP_COUNTER);
         mStepDetectorSensor = mSensorManager
                 .getDefaultSensor(Sensor.TYPE_STEP_DETECTOR);
+
+        // Setup Volley networking request
+        queue = Volley.newRequestQueue(this); // Need to set up a queue that holds all Volley requests
+        String url = "http://www.reddit.com/r/pics.json"; // The url we are getting data from
+
+        StringRequest request = new StringRequest(Request.Method.GET, url,
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        Log.d(TAG, response);
+                    }
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Log.d(TAG, error.toString(), error);
+                    }
+                });
+
+        // Add the request to the Volley request queue
+        queue.add(request);
     }
 
     @Override
@@ -135,6 +168,11 @@ public class MainActivity extends Activity implements SensorEventListener {
 
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
+
+    }
+
+    public void sendPostRequest() {
+        // Setup Volley networking request
 
     }
 }
