@@ -16,23 +16,25 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 public class MainActivity extends Activity implements SensorEventListener {
 
-    private TextView textView;
+    private final int NUMBER_OF_STEPS_TRACKED = 35;//1000;
+    private final int ABNORNAL_THRESHOLD = 150; //13
+
+    private TextView statusView;
+    private TextView readingsView;
 
     private long pastTime = -1;
-
     private LinkedBlockingQueue<String> msPerStep = new LinkedBlockingQueue<>();
 
     private SensorManager mSensorManager;
-
     private Sensor mStepCounterSensor;
-
     private Sensor mStepDetectorSensor;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        textView = (TextView) findViewById(R.id.textview);
+        statusView = (TextView) findViewById(R.id.status);
+        readingsView = (TextView) findViewById(R.id.readings);
 
         mSensorManager = (SensorManager)
                 getSystemService(Context.SENSOR_SERVICE);
@@ -88,12 +90,44 @@ public class MainActivity extends Activity implements SensorEventListener {
     @Override
     public void onSensorChanged(SensorEvent event) {
         Sensor sensor = event.sensor;
+        int abnormals = 0;
 
         if (sensor.getType() == Sensor.TYPE_STEP_DETECTOR) {
             long nowTime = System.currentTimeMillis();
             if (pastTime != -1) {
+                if (msPerStep.size() >= NUMBER_OF_STEPS_TRACKED + 1) {
+                    String[] msPerStepArray = msPerStep.toArray(new String[NUMBER_OF_STEPS_TRACKED + 1]);
+                    for (int i = 0; i < msPerStepArray.length; i++) {
+                        if (i < msPerStepArray.length - 1) {
+                            Long dx_msPerStep = Math.abs(Long.valueOf(msPerStepArray[i]) - Long.valueOf(msPerStepArray[i + 1]));
+                            if (dx_msPerStep > ABNORNAL_THRESHOLD) {
+                                abnormals++;
+                            }
+                        }
+                    }
+                    msPerStep.poll();
+                }
                 long timeDifference = nowTime - pastTime;
-                textView.setText(textView.getText().toString() + '\n' + timeDifference);
+                msPerStep.offer(String.valueOf(timeDifference));
+
+                if (msPerStep.size() < NUMBER_OF_STEPS_TRACKED) {
+                    int difference = NUMBER_OF_STEPS_TRACKED - msPerStep.size();
+                    statusView.setText("Needs " + difference + " more steps!");
+                } else {
+                    statusView.setText(abnormals + " abnormals in " + NUMBER_OF_STEPS_TRACKED + " steps");
+//                    if (abnormals > 13) {
+//                        // SEND POST REQUEST
+//                    }
+                }
+
+                String print = "";
+                String[] msPerStepArray = msPerStep.toArray(new String[NUMBER_OF_STEPS_TRACKED + 1]);
+                for (int i = msPerStep.size() - 1; i >= 0; i--) {
+                    print += msPerStepArray[i] + '\n';
+                }
+                readingsView.setText(print);
+//                textView.setText(textView.getText().toString() + '\n' + timeDifference);
+
             }
             pastTime = nowTime;
         }
