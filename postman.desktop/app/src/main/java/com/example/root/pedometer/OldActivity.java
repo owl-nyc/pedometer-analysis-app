@@ -10,8 +10,6 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -25,12 +23,11 @@ import com.android.volley.toolbox.Volley;
 import java.util.concurrent.LinkedBlockingQueue;
 
 
-public class MainActivity extends Activity implements SensorEventListener {
+public class OldActivity extends Activity implements SensorEventListener {
 
     private final int NUMBER_OF_STEPS_TRACKED = 35;//1000;
     private final int ABNORNAL_THRESHOLD = 150; //13
-    private int count = 0;
-    private boolean session = false;
+    int count = 0;
 
     RequestQueue queue;
     // Tag used to log messages
@@ -42,8 +39,6 @@ public class MainActivity extends Activity implements SensorEventListener {
 
     private TextView statusView;
     private TextView readingsView;
-    private TextView conditionView;
-    private Button toggleButton;
 
     private long pastTime = -1;
     private LinkedBlockingQueue<String> msPerStep = new LinkedBlockingQueue<>();
@@ -58,8 +53,6 @@ public class MainActivity extends Activity implements SensorEventListener {
         setContentView(R.layout.activity_main);
         statusView = (TextView) findViewById(R.id.status);
         readingsView = (TextView) findViewById(R.id.readings);
-        conditionView = (TextView) findViewById(R.id.condition);
-        toggleButton = (Button) findViewById(R.id.toggly);
 
         mSensorManager = (SensorManager)
                 getSystemService(Context.SENSOR_SERVICE);
@@ -68,10 +61,28 @@ public class MainActivity extends Activity implements SensorEventListener {
         mStepDetectorSensor = mSensorManager
                 .getDefaultSensor(Sensor.TYPE_STEP_DETECTOR);
 
-        gps = new GPSTracker(MainActivity.this);
+        gps = new GPSTracker(OldActivity.this);
 
         // Setup Volley networking request
         queue = Volley.newRequestQueue(this); // Need to set up a queue that holds all Volley requests
+//        String url = "http://www.reddit.com/r/pics.json"; // The url we are getting data from
+//
+//        StringRequest request = new StringRequest(Request.Method.GET, url,
+//                new Response.Listener<String>() {
+//                    @Override
+//                    public void onResponse(String response) {
+//                        Log.d(TAG, response);
+//                    }
+//                },
+//                new Response.ErrorListener() {
+//                    @Override
+//                    public void onErrorResponse(VolleyError error) {
+//                        Log.d(TAG, error.toString(), error);
+//                    }
+//                });
+//
+//        // Add the request to the Volley request queue
+//        queue.add(request);
     }
 
     @Override
@@ -123,7 +134,7 @@ public class MainActivity extends Activity implements SensorEventListener {
         int abnormals = 0;
         boolean abnormal = false;
 
-        if (sensor.getType() == Sensor.TYPE_STEP_DETECTOR && session) {
+        if (sensor.getType() == Sensor.TYPE_STEP_DETECTOR) {
             count++;
             long nowTime = System.currentTimeMillis();
             if (pastTime != -1) {
@@ -158,16 +169,7 @@ public class MainActivity extends Activity implements SensorEventListener {
                     print += msPerStepArray[i] + '\n';
                 }
                 readingsView.setText(print);
-
-                print = "";
-                if (abnormals < 5) {
-                    print = "good";
-                } else if (abnormals < 10) {
-                    print = "okay";
-                } else if (abnormals >= 13) {
-                    print = "intoxicated";
-                }
-                conditionView.setText(print);
+//                textView.setText(textView.getText().toString() + '\n' + timeDifference);
 
             }
             pastTime = nowTime;
@@ -178,8 +180,6 @@ public class MainActivity extends Activity implements SensorEventListener {
                 String url = "http://agnok.com/set_state?name="+username+"&lat="+latitude+"&lon="+longitude;
                 if (abnormal) {
                     url += "&drunk=" + true;
-                } else {
-                    url += "&drunk=" + false;
                 }
 
                 StringRequest request = new StringRequest(Request.Method.GET, url,
@@ -217,12 +217,8 @@ public class MainActivity extends Activity implements SensorEventListener {
 
     }
 
-    public void toggleButton(View view) {
-        session = !session;
-        if (session) {
-            toggleButton.setText("End");
-        } else {
-            toggleButton.setText("Start");
-        }
+    public void sendPostRequest() {
+        // Setup Volley networking request
+
     }
 }
