@@ -11,6 +11,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
@@ -26,10 +27,15 @@ public class MainActivity extends Activity implements SensorEventListener {
 
     private final int NUMBER_OF_STEPS_TRACKED = 35;//1000;
     private final int ABNORNAL_THRESHOLD = 150; //13
+    int count = 0;
 
     RequestQueue queue;
     // Tag used to log messages
     private static final String TAG = MainActivity.class.getSimpleName();
+
+    String username = "fred";
+    // GPSTracker class
+    GPSTracker gps;
 
     private TextView statusView;
     private TextView readingsView;
@@ -55,26 +61,28 @@ public class MainActivity extends Activity implements SensorEventListener {
         mStepDetectorSensor = mSensorManager
                 .getDefaultSensor(Sensor.TYPE_STEP_DETECTOR);
 
+        gps = new GPSTracker(MainActivity.this);
+
         // Setup Volley networking request
         queue = Volley.newRequestQueue(this); // Need to set up a queue that holds all Volley requests
-        String url = "http://www.reddit.com/r/pics.json"; // The url we are getting data from
-
-        StringRequest request = new StringRequest(Request.Method.GET, url,
-                new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-                        Log.d(TAG, response);
-                    }
-                },
-                new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        Log.d(TAG, error.toString(), error);
-                    }
-                });
-
-        // Add the request to the Volley request queue
-        queue.add(request);
+//        String url = "http://www.reddit.com/r/pics.json"; // The url we are getting data from
+//
+//        StringRequest request = new StringRequest(Request.Method.GET, url,
+//                new Response.Listener<String>() {
+//                    @Override
+//                    public void onResponse(String response) {
+//                        Log.d(TAG, response);
+//                    }
+//                },
+//                new Response.ErrorListener() {
+//                    @Override
+//                    public void onErrorResponse(VolleyError error) {
+//                        Log.d(TAG, error.toString(), error);
+//                    }
+//                });
+//
+//        // Add the request to the Volley request queue
+//        queue.add(request);
     }
 
     @Override
@@ -124,8 +132,10 @@ public class MainActivity extends Activity implements SensorEventListener {
     public void onSensorChanged(SensorEvent event) {
         Sensor sensor = event.sensor;
         int abnormals = 0;
+        boolean abnormal = false;
 
         if (sensor.getType() == Sensor.TYPE_STEP_DETECTOR) {
+            count++;
             long nowTime = System.currentTimeMillis();
             if (pastTime != -1) {
                 if (msPerStep.size() >= NUMBER_OF_STEPS_TRACKED + 1) {
@@ -148,9 +158,9 @@ public class MainActivity extends Activity implements SensorEventListener {
                     statusView.setText("Needs " + difference + " more steps!");
                 } else {
                     statusView.setText(abnormals + " abnormals in " + NUMBER_OF_STEPS_TRACKED + " steps");
-//                    if (abnormals > 13) {
-//                        // SEND POST REQUEST
-//                    }
+                    if (abnormals > 13) {
+                        abnormal = true;
+                    }
                 }
 
                 String print = "";
@@ -163,6 +173,42 @@ public class MainActivity extends Activity implements SensorEventListener {
 
             }
             pastTime = nowTime;
+
+            if(gps.canGetLocation() && count >= 10) {
+                double latitude = gps.getLatitude();
+                double longitude = gps.getLongitude();
+                String url = "http://agnok.com/set_state?name="+username+"&lat="+latitude+"&lon="+longitude;
+                if (abnormal) {
+                    url += "&drunk=" + true;
+                }
+
+                StringRequest request = new StringRequest(Request.Method.GET, url,
+                        new Response.Listener<String>() {
+                            @Override
+                            public void onResponse(String response) {
+                                Toast.makeText(
+                                        getApplicationContext(),
+                                        response,
+                                        Toast.LENGTH_SHORT)
+                                        .show();
+                            }
+                        },
+                        new Response.ErrorListener() {
+                            @Override
+                            public void onErrorResponse(VolleyError error) {
+                                Log.d(TAG, error.toString(), error);
+                                Toast.makeText(
+                                        getApplicationContext(),
+                                        "Watch not added.",
+                                        Toast.LENGTH_SHORT)
+                                        .show();
+                            }
+                        });
+
+                // Add the request to the Volley request queue
+                queue.add(request);
+                count = 0;
+            }
         }
     }
 
